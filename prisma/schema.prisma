@@ -1,0 +1,213 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                      String    @id @default(uuid())
+  email                   String    @unique
+  password                String
+  firstName               String    @map("firstname")
+  lastName                String    @map("lastname")
+  phone                   String?
+  isVerified              Boolean   @default(false) @map("isverified")
+  verificationToken       String?   @map("verificationtoken")
+  verificationTokenExpiry DateTime? @map("verificationtokenexpiry")
+  createdAt               DateTime  @default(now()) @map("createdat")
+  updatedAt               DateTime  @updatedAt @map("updatedat")
+
+  @@map("users")
+}
+
+model Guest {
+  id            String    @id @default(uuid())
+  firstName     String    @map("firstname")
+  lastName      String    @map("lastname")
+  email         String
+  phone         String
+  idCardNumber  String    @map("id_card_number")
+  nationality   String
+  address       String
+  vipStatus     Boolean   @default(false) @map("vip_status")
+  createdAt     DateTime  @default(now()) @map("createdat")
+  updatedAt     DateTime  @updatedAt @map("updatedat")
+
+  bookings      Booking[]
+  orders        Order[]
+
+  @@map("guests")
+}
+
+model RoomType {
+  id          String    @id @default(uuid())
+  name        String
+  description String?
+  basePrice   Int       @map("base_price")
+  capacity    Int
+  amenities   String[]
+  createdAt   DateTime  @default(now()) @map("createdat")
+  updatedAt   DateTime  @updatedAt @map("updatedat")
+
+  rooms       Room[]
+  bookings    Booking[]
+
+  @@map("room_types")
+}
+
+model Room {
+  id            String     @id @default(uuid())
+  roomNumber    String     @unique @map("room_number")
+  roomTypeId    String     @map("room_type_id")
+  floor         Int
+  status        RoomStatus @default(AVAILABLE)
+  pricePerNight Int        @map("price_per_night")
+  image         String?
+  notes         String?
+  createdAt     DateTime   @default(now()) @map("createdat")
+  updatedAt     DateTime   @updatedAt @map("updatedat")
+
+  roomType      RoomType   @relation(fields: [roomTypeId], references: [id])
+  bookings      Booking[]
+
+  @@map("rooms")
+}
+
+enum RoomStatus {
+  AVAILABLE
+  OCCUPIED
+  RESERVED
+  MAINTENANCE
+  CLEANING
+}
+
+model Booking {
+  id             String        @id @default(uuid())
+  bookingNumber  String        @unique @map("booking_number")
+  guestId        String        @map("guest_id")
+  roomId         String        @map("room_id")
+  roomTypeId     String        @map("room_type_id")
+  checkIn        DateTime      @map("check_in")
+  checkOut       DateTime      @map("check_out")
+  adults         Int
+  children       Int
+  totalPrice     Int           @map("total_price")
+  status         BookingStatus @default(PENDING)
+  specialRequest String?       @map("special_request")
+  createdAt      DateTime      @default(now()) @map("createdat")
+  updatedAt      DateTime      @updatedAt @map("updatedat")
+
+  guest          Guest         @relation(fields: [guestId], references: [id])
+  room           Room          @relation(fields: [roomId], references: [id])
+  roomType       RoomType      @relation(fields: [roomTypeId], references: [id])
+  payment        Payment?
+
+  @@map("bookings")
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+}
+
+model Order {
+  id          String      @id @default(uuid())
+  orderNumber String      @unique @map("order_number")
+  guestId     String      @map("guest_id")
+  roomNumber  String?     @map("room_number")
+  orderType   OrderType   @map("order_type")
+  totalAmount Int         @map("total_amount")
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now()) @map("createdat")
+  updatedAt   DateTime    @updatedAt @map("updatedat")
+
+  guest       Guest       @relation(fields: [guestId], references: [id])
+  items       OrderItem[]
+  payment     Payment?
+
+  @@map("orders")
+}
+
+enum OrderType {
+  RESTAURANT
+  ROOM_SERVICE
+}
+
+enum OrderStatus {
+  PENDING
+  PREPARING
+  DELIVERED
+  COMPLETED
+  CANCELLED
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String   @map("order_id")
+  menuItemId String   @map("menu_item_id")
+  quantity   Int
+  price      Int
+  createdAt  DateTime @default(now()) @map("createdat")
+
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  menuItem   MenuItem @relation(fields: [menuItemId], references: [id])
+
+  @@map("order_items")
+}
+
+model MenuItem {
+  id          String    @id @default(uuid())
+  name        String
+  category    String
+  price       Int
+  description String?
+  isAvailable Boolean   @default(true) @map("is_available")
+  image       String?
+  createdAt   DateTime  @default(now()) @map("createdat")
+  updatedAt   DateTime  @updatedAt @map("updatedat")
+
+  orderItems  OrderItem[]
+
+  @@map("menu_items")
+}
+
+model Payment {
+  id            String        @id @default(uuid())
+  paymentNumber String        @unique @map("payment_number")
+  bookingId     String?       @unique @map("booking_id")
+  orderId       String?       @unique @map("order_id")
+  amount        Int
+  paymentMethod PaymentMethod @map("payment_method")
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+  transactionId String?       @map("transaction_id")
+  paidAt        DateTime?     @map("paid_at")
+  createdAt     DateTime      @default(now()) @map("createdat")
+  updatedAt     DateTime      @updatedAt @map("updatedat")
+
+  booking       Booking?      @relation(fields: [bookingId], references: [id])
+  order         Order?        @relation(fields: [orderId], references: [id])
+
+  @@map("payments")
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  SUCCESS
+  FAILED
+}
+
+enum PaymentMethod {
+  CASH
+  CREDIT_CARD
+  DEBIT_CARD
+  BANK_TRANSFER
+  E_WALLET
+  QRIS
+}
