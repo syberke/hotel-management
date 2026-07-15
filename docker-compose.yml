@@ -1,39 +1,60 @@
-﻿version: '3.8'
-
-services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: hotel_db
-    environment:
-      POSTGRES_USER: hotel_admin
-      POSTGRES_PASSWORD: hotel_secret_2024
-      POSTGRES_DB: hotel_management
-    ports:
-      - "5432:5432"
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - hotel_network
+﻿services:
+  # Next.js Application (3 instances)
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
     restart: unless-stopped
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXT_PUBLIC_APP_NAME=${NEXT_PUBLIC_APP_NAME}
+      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - MIDTRANS_SERVER_KEY=${MIDTRANS_SERVER_KEY}
+      - MIDTRANS_CLIENT_KEY=${MIDTRANS_CLIENT_KEY}
+      - MIDTRANS_IS_PRODUCTION=${MIDTRANS_IS_PRODUCTION}
+      - NEXT_PUBLIC_MIDTRANS_CLIENT_KEY=${NEXT_PUBLIC_MIDTRANS_CLIENT_KEY}
+      - JWT_SECRET=${JWT_SECRET}
+      - EMAIL_USER=${EMAIL_USER:-}
+      - EMAIL_PASSWORD=${EMAIL_PASSWORD:-}
+    networks:
+      - hotel-network
+    deploy:
+      replicas: 3
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
+  # Nginx Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: hotel_nginx
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - web
+    networks:
+      - hotel-network
+
+  # pgAdmin (Optional)
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: hotel_pgadmin
+    restart: unless-stopped
     environment:
       PGADMIN_DEFAULT_EMAIL: admin@hotel.com
       PGADMIN_DEFAULT_PASSWORD: admin123
     ports:
       - "5050:80"
-    depends_on:
-      - postgres
     networks:
-      - hotel_network
-    restart: unless-stopped
-
-volumes:
-  postgres_data:
+      - hotel-network
 
 networks:
-  hotel_network:
-    driver: bridge  
+  hotel-network:
+    driver: bridge
