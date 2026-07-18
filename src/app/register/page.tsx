@@ -51,13 +51,31 @@ export default function RegisterPage() {
       });
 
       const data = await res.json();
+      const verificationEmail = data.email || formData.email.trim().toLowerCase();
 
       if (!res.ok) {
+        if (data.requiresVerification) {
+          toast.info(data.error);
+          router.push(
+            `/verify-email?email=${encodeURIComponent(verificationEmail)}`,
+          );
+          return;
+        }
+
         throw new Error(data.error || "Gagal registrasi");
       }
 
-      toast.success("Registrasi berhasil! Silakan cek email untuk verifikasi.");
-      router.push("/login");
+      if (data.verificationEmailSent) {
+        toast.success(data.message);
+      } else {
+        toast.warning(data.message);
+      }
+
+      router.push(
+        `/verify-email?email=${encodeURIComponent(verificationEmail)}&sent=${
+          data.verificationEmailSent ? "1" : "0"
+        }`,
+      );
     } catch (error: any) {
       toast.error(error.message || "Gagal registrasi");
     } finally {
