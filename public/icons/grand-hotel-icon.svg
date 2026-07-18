@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Grand Hotel">
+  <defs>
+    <linearGradient id="bg" x1="64" y1="48" x2="448" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2d5a87"/>
+      <stop offset="1" stop-color="#132b45"/>
+    </linearGradient>
+    <linearGradient id="gold" x1="168" y1="120" x2="356" y2="396" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffe39a"/>
+      <stop offset="1" stop-color="#d4a72c"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
+  <path d="M128 396h256v28H128z" fill="#f8fafc" opacity=".95"/>
+  <path d="M160 214h192v182H160z" fill="#f8fafc"/>
+  <path d="M144 214 256 112l112 102H144Z" fill="url(#gold)"/>
+  <path d="M220 300h72v96h-72z" fill="#1e3a5f"/>
+  <g fill="#2d5a87">
+    <rect x="184" y="244" width="36" height="36" rx="5"/>
+    <rect x="238" y="244" width="36" height="36" rx="5"/>
+    <rect x="292" y="244" width="36" height="36" rx="5"/>
+    <rect x="184" y="300" width="24" height="28" rx="4"/>
+    <rect x="304" y="300" width="24" height="28" rx="4"/>
+  </g>
+  <circle cx="277" cy="348" r="5" fill="#f4c95d"/>
+</svg>
