@@ -55,10 +55,19 @@ export async function POST(request: Request) {
       user.email,
       `${user.firstName} ${user.lastName}`,
       verificationToken,
+      new URL(request.url).origin,
     );
 
     if (!emailResult.success) {
       console.error("Failed to resend verification email:", emailResult.error);
+      await prisma.user.update({
+        where: { id: user.id },
+        data: {
+          verificationToken: null,
+          verificationTokenExpiry: null,
+        },
+      });
+
       return NextResponse.json(
         { error: "Email verifikasi belum dapat dikirim. Silakan coba lagi." },
         { status: 503 },
